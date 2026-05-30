@@ -1,0 +1,31 @@
+<html>
+    <head>
+        <script type="module" src="bens_quiz.js"></script>
+        <link rel="stylesheet" href="bens_quiz.css">
+    </head>
+    <body>
+        <h1>Ben's Birthday Quiz</h1>
+        <div id="question"></div>
+        <div id="setter"></div>
+        <div id="result"></div>
+        <div id="answer_box">
+            <div id="actual_answer">
+                <input type="text" id="answer_field">
+                <button id="submit_answer">Submit</button>
+            </div>
+            <div id="skip">
+                <button id="skip_button">Skip</button>
+                <div id="skip_status">
+                    You have <span id="skip_count"></span> skips remaining.
+                </div>
+            </div>
+            <div id="question_navigation">
+                <button id="back_button">Back</button>
+            </div>
+        </div>
+        <script type="module">
+            import { page_load } from './bens_quiz.js';
+            page_load();
+        </script>
+    </body>
+</html>
