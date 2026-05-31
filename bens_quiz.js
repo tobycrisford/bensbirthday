@@ -133,6 +133,7 @@ export async function back() {
         // just reset the game rather than risk leaving broken state
         quiz_state.crypto_tree = original_crypto_tree;
         pswd_chain = [];
+        savePasswordChain(pswd_chain);
     }
     load_active_question(quiz_state);
 }
