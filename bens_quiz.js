@@ -85,7 +85,8 @@ async function load_active_question(quiz) {
 async function submit_answer(quiz, answer, salt) {
     const clean_answer = answer.replace(/\s/g, '').toLowerCase();
     const next_state_bytes = await decrypt_bytes(quiz.crypto_tree.next_question, clean_answer, salt, quiz.crypto_tree.next_question_iv);
-    update_quiz_tree_state(bytesToObject(next_state_bytes), clean_answer);
+    const next_state = await gzipBytesToObject(next_state_bytes)
+    update_quiz_tree_state(next_state, clean_answer);
 }
 
 async function skip(quiz) {
@@ -170,14 +171,7 @@ async function load_gz_json(url) {
     const buffer = await response.arrayBuffer();
     const bytes = new Uint8Array(buffer);
 
-    const stream = new DecompressionStream('gzip');
-    const writer = stream.writable.getWriter();
-    writer.write(bytes);
-    writer.close();
-
-    const decompressed = await new Response(stream.readable).arrayBuffer();
-    const json = new TextDecoder().decode(decompressed);
-    return JSON.parse(json);
+    return await gzipBytesToObject(bytes);
 }
 
 export async function page_load() {
