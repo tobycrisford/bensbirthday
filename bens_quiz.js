@@ -18,16 +18,22 @@ function loadPasswordChain() {
     return JSON.parse(decodeURIComponent(match.split('=')[1]));
 }
 
+function isDateOnOrBeforeToday(dateStr) {
+    const today = new Date().toISOString().slice(0, 10); // "YYYY-MM-DD"
+    return dateStr <= today;
+  }
+
 function update_quiz_tree_state(new_tree_state, pswd) {
     pswd_chain.push(pswd);
     quiz_state.crypto_tree = new_tree_state;
     savePasswordChain(pswd_chain);
 }
 
-function render_question(question_json) {
+function render_question(question_json, question_number, total_questions) {
     document.getElementById("actual_answer").style.display = '';
     document.getElementById("skip").style.display = '';
     document.getElementById("question").innerHTML = question_json.content;
+    document.getElementById("question_title").innerHTML = `Question ${question_number + 1} of ${total_questions}`;
     if (question_json.setter.length > 0) {
         document.getElementById("setter").innerText = "Setter: " + question_json.setter;
     }
@@ -39,9 +45,20 @@ function render_question(question_json) {
     document.getElementById("submit_answer").disabled = false;
 }
 
+function render_not_yet_published(question_number, publish_date) {
+    const msg = `Congratulations! You have made it to Question ${question_number + 1}!<br>This question will be published on ${publish_date}.`;
+    document.getElementById("question").innerHTML = msg;
+    document.getElementById("actual_answer").style.display = 'none';
+    document.getElementById("skip").style.display = 'none';
+    document.getElementById("question_title").innerHTML = '';
+    document.getElementById("result").innerText = '';
+    document.getElementById("setter").innerText = '';
+}
+
 function render_endgame(n_skips) {
     document.getElementById("actual_answer").style.display = 'none';
     document.getElementById("skip").style.display = 'none';
+    document.getElementById("question_title").innerHTML = '';
     const used_skips = original_crypto_tree.skips_remaining - n_skips;
     document.getElementById("result").innerText = `You completed the game using ${used_skips} skips`;
 }
@@ -74,10 +91,16 @@ async function load_active_question(quiz) {
     const encrypted_question = quiz.questions[quiz.crypto_tree.current_question];
     const question_bytes = await decrypt_bytes(encrypted_question, quiz.crypto_tree.question_key, '', quiz.crypto_tree.question_iv);
     const question = await gzipBytesToObject(question_bytes);
-    render_question(question);
-    render_skips(quiz.crypto_tree.skips_remaining);
-    if (quiz.crypto_tree.next_question === null) {
-        render_endgame(quiz.crypto_tree.skips_remaining);
+    if (!isDateOnOrBeforeToday(question.publish_date) && quiz.crypto_tree.next_question !== null) {
+        render_not_yet_published(quiz.crypto_tree.current_question, question.publish_date);
+    }
+    else {
+        // Total questions is one less than questions.length due to endgame screen
+        render_question(question, quiz.crypto_tree.current_question, quiz.questions.length - 1);
+        render_skips(quiz.crypto_tree.skips_remaining);
+        if (quiz.crypto_tree.next_question === null) {
+            render_endgame(quiz.crypto_tree.skips_remaining);
+        }
     }
     render_back_button(quiz.crypto_tree.current_question);
 }
